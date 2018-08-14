@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:levelup_flutter_reactive/async/TriggerFutureBuilder.dart';
 import 'package:levelup_flutter_reactive/pokemon/data/pokemon_json_factory.dart';
 import 'package:http/http.dart' as http;
 import 'package:rxdart/rxdart.dart';
@@ -95,10 +96,12 @@ class _PokemonPagePageState extends State<PokemonPage> {
           children: <Widget>[Text(element.name), Image.network(element.image)],
         ),
         children: <Widget>[
-          FutureBuilder<PokemonDesc>(
-              future: fetchPokemonDesc(url),
-              builder: (context, snapshot) {
+          TriggerFutureBuilder<PokemonDesc>(
+              future: () => fetchPokemonDesc(url),
+              builder: (context, snapshot, trigger) {
+
                 switch (snapshot.connectionState) {
+                  case ConnectionState.none: return FlatButton(child: Text('Get ${element.name} descriptions'), onPressed: trigger);
                   case ConnectionState.waiting:
                     return Column(children: <Widget>[
                       Text('Awaiting result for ${element.name} descriptions'),
@@ -109,7 +112,7 @@ class _PokemonPagePageState extends State<PokemonPage> {
                     ]);
                   default:
                     if (snapshot.hasError)
-                      return Text('Error: ${snapshot.error}');
+                      return FlatButton(child: Text('Error try again'), onPressed: trigger);
                     else {
                       return buildPokemonDesc(snapshot.data);
                     }
