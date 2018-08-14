@@ -16,26 +16,36 @@ class PokemonPage extends StatefulWidget {
 
 class _PokemonPagePageState extends State<PokemonPage> {
 
+  BehaviorSubject<String> searchQuery = BehaviorSubject<String>(seedValue: "");
+
   Observable<Pokemons> fetchPokemons() {
-    return Observable.fromFuture(http.get('http://pokeapi.co/api/v2/pokemon/'))
-    .map((data) => Pokemons.fromJson(json.decode(data.body)));
+    return Observable.combineLatest2(
+        http.get('http://pokeapi.co/api/v2/pokemon/').asStream().map((data) =>
+            Pokemons.fromJson(json.decode(data.body))), searchQuery,
+            (Pokemons pokemons, String query) =>
+            Pokemons(results: pokemons.results.where((element) =>
+                element.name.contains(query)).toList()));
   }
 
   Future<Pokemon> fetchPokemon(String url) {
-    return Observable.fromFuture(http.get(url))
-    .map((data) => Pokemon.fromJson(json.decode(data.body))).first;
+    return Observable
+        .fromFuture(http.get(url))
+        .map((data) => Pokemon.fromJson(json.decode(data.body)))
+        .first;
   }
 
   Future<PokemonDesc> fetchPokemonDesc(String url) {
-    return Observable.fromFuture(http.get(url))
-        .map((data) => PokemonDesc.fromJson(json.decode(data.body))).first;
+    return Observable
+        .fromFuture(http.get(url))
+        .map((data) => PokemonDesc.fromJson(json.decode(data.body)))
+        .first;
   }
 
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
         appBar: new AppBar(
-          title: new Text("Pokemons"),
+          title: new TextField(onChanged: (query) => searchQuery.add(query),),
         ),
         body: buildAllPokemons());
   }
