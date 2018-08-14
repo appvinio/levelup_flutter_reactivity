@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:levelup_flutter_reactive/pokemon/data/pokemon_json_factory.dart';
 import 'package:http/http.dart' as http;
+import 'package:rxdart/rxdart.dart';
 
 class PokemonPage extends StatefulWidget {
   PokemonPage({Key key}) : super(key: key);
@@ -14,14 +15,10 @@ class PokemonPage extends StatefulWidget {
 }
 
 class _PokemonPagePageState extends State<PokemonPage> {
-  Future<Pokemons> fetchPokemons() async {
-    final response = await http.get('http://pokeapi.co/api/v2/pokemon/');
 
-    if (response.statusCode == 200) {
-      return Pokemons.fromJson(json.decode(response.body));
-    } else {
-      throw Exception('Failed to load post');
-    }
+  Stream<Pokemons> fetchPokemons()  {
+    return Observable.fromFuture(http.get('http://pokeapi.co/api/v2/pokemon/'))
+    .map((data) => Pokemons.fromJson(json.decode(data.body)));
   }
 
   Future<Pokemon> fetchPokemon(String url) async {
@@ -53,9 +50,9 @@ class _PokemonPagePageState extends State<PokemonPage> {
         body: buildAllPokemons());
   }
 
-  FutureBuilder<Pokemons> buildAllPokemons() {
-    return FutureBuilder(
-        future: fetchPokemons(),
+  Widget buildAllPokemons() {
+    return StreamBuilder(
+        stream: fetchPokemons(),
         builder: (context, snapshot) {
           switch (snapshot.connectionState) {
             case ConnectionState.waiting:
