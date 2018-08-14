@@ -16,29 +16,19 @@ class PokemonPage extends StatefulWidget {
 
 class _PokemonPagePageState extends State<PokemonPage> {
 
-  Stream<Pokemons> fetchPokemons()  {
+  Observable<Pokemons> fetchPokemons() {
     return Observable.fromFuture(http.get('http://pokeapi.co/api/v2/pokemon/'))
     .map((data) => Pokemons.fromJson(json.decode(data.body)));
   }
 
-  Future<Pokemon> fetchPokemon(String url) async {
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      return Pokemon.fromJson(json.decode(response.body));
-    } else {
-      throw Exception('Failed to load post');
-    }
+  Future<Pokemon> fetchPokemon(String url) {
+    return Observable.fromFuture(http.get(url))
+    .map((data) => Pokemon.fromJson(json.decode(data.body))).first;
   }
 
-  Future<PokemonDesc> fetchPokemonDesc(String url) async {
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      return PokemonDesc.fromJson(json.decode(response.body));
-    } else {
-      throw Exception('Failed to load post');
-    }
+  Future<PokemonDesc> fetchPokemonDesc(String url) {
+    return Observable.fromFuture(http.get(url))
+        .map((data) => PokemonDesc.fromJson(json.decode(data.body))).first;
   }
 
   @override
