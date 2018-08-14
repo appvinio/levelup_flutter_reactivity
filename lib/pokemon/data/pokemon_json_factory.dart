@@ -38,3 +38,19 @@ class Pokemon {
     );
   }
 }
+
+class PokemonDesc {
+  final int baseExperience;
+  final int height;
+  final int weight;
+
+  PokemonDesc({this.baseExperience, this.height, this.weight});
+
+  factory PokemonDesc.fromJson(Map<String, dynamic> json) {
+    return PokemonDesc(
+      baseExperience: json['base_experience'],
+      height: json['height'],
+      weight: json['weight'],
+    );
+  }
+}

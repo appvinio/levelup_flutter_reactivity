@@ -34,6 +34,16 @@ class _PokemonPagePageState extends State<PokemonPage> {
     }
   }
 
+  Future<PokemonDesc> fetchPokemonDesc(String url) async {
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      return PokemonDesc.fromJson(json.decode(response.body));
+    } else {
+      throw Exception('Failed to load post');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
@@ -45,22 +55,23 @@ class _PokemonPagePageState extends State<PokemonPage> {
 
   FutureBuilder<Pokemons> buildAllPokemons() {
     return FutureBuilder(
-          future: fetchPokemons(),
-          builder: (context, snapshot) {
-            switch (snapshot.connectionState) {
-              case ConnectionState.waiting:
-                return Text('Awaiting result...');
-              default:
-                if (snapshot.hasError)
-                  return Text('Error: ${snapshot.error}');
-                else {
-                  Pokemons pokemons = snapshot.data;
-                  return ListView.builder(
-                      itemCount: pokemons.results.length,
-                      itemBuilder: (context, index) => buildPokemon(pokemons.results[index]));
-                }
-            }
-          });
+        future: fetchPokemons(),
+        builder: (context, snapshot) {
+          switch (snapshot.connectionState) {
+            case ConnectionState.waiting:
+              return Text('Awaiting result...');
+            default:
+              if (snapshot.hasError)
+                return Text('Error: ${snapshot.error}');
+              else {
+                Pokemons pokemons = snapshot.data;
+                return ListView.builder(
+                    itemCount: pokemons.results.length,
+                    itemBuilder: (context, index) =>
+                        buildPokemon(pokemons.results[index]));
+              }
+          }
+        });
   }
 
   Widget buildPokemon(PokemonsListElement element) {
@@ -74,20 +85,51 @@ class _PokemonPagePageState extends State<PokemonPage> {
               if (snapshot.hasError)
                 return Text('Error: ${snapshot.error}');
               else {
-                return buildPokemonDesc(snapshot.data);
+                return buildPokemonInfo(snapshot.data, element.url);
               }
           }
         });
   }
 
-  Widget buildPokemonDesc(Pokemon element) {
+  Widget buildPokemonInfo(Pokemon element, String url) {
     return Card(
-      child: Column(
+      child: ExpansionTile(
+        title: Column(
+          children: <Widget>[Text(element.name), Image.network(element.image)],
+        ),
         children: <Widget>[
-          Text(element.name),
-          Image.network(element.image)
+          FutureBuilder<PokemonDesc>(
+              future: fetchPokemonDesc(url),
+              builder: (context, snapshot) {
+                switch (snapshot.connectionState) {
+                  case ConnectionState.waiting:
+                    return Column(children: <Widget>[
+                      Text('Awaiting result for ${element.name} descriptions'),
+                      Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: CircularProgressIndicator(),
+                      ),
+                    ]);
+                  default:
+                    if (snapshot.hasError)
+                      return Text('Error: ${snapshot.error}');
+                    else {
+                      return buildPokemonDesc(snapshot.data);
+                    }
+                }
+              })
         ],
       ),
+    );
+  }
+
+  Widget buildPokemonDesc(PokemonDesc element) {
+    return Column(
+      children: <Widget>[
+        Text("Base experience : ${element.baseExperience}"),
+        Text("Weight : ${element.weight}"),
+        Text("Height : ${element.height}"),
+      ],
     );
   }
 }
